@@ -61,6 +61,30 @@ Esto generará:
 
 Transfiere el archivo `hola_ps3.self` a tu consola PS3 con CFW (Custom Firmware) mediante FTP o USB y ejecútalo desde un file manager como **multiMAN** o **webMAN**.
 
+### 5. Ejecutar en emulador (RPCS3)
+
+Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/):
+
+1. **Descargar RPCS3** desde [rpcs3.net](https://rpcs3.net/download) (disponible para Windows, Linux y macOS).
+
+2. **Instalar el firmware de PS3:**
+   - Descarga el firmware oficial desde [PlayStation.com](https://www.playstation.com/en-us/support/hardware/ps3/system-software/).
+   - En RPCS3 ve a **File → Install Firmware** y selecciona el archivo `PS3UPDAT.PUP`.
+
+3. **Ejecutar el homebrew:**
+   - Ve a **File → Boot (S)ELF / (S)SELF** y selecciona el archivo `hola_ps3.self`.
+   - Alternativamente, puedes arrastrar el archivo `.self` directamente a la ventana de RPCS3.
+
+4. **Crear un PKG instalable** *(opcional)*:
+   Si prefieres instalar como aplicación en RPCS3, puedes empaquetar el `.self` en un `.pkg`:
+   ```bash
+   # Dentro del Dev Container (si las herramientas de empaquetado están disponibles)
+   make pkg
+   ```
+   Luego en RPCS3: **File → Install Packages/Raps/Edats** y selecciona el `.pkg`.
+
+> **Nota:** RPCS3 requiere un equipo con buenas prestaciones. Consulta la [guía de inicio rápido](https://rpcs3.net/quickstart) para los requisitos de sistema recomendados.
+
 ## Detalles técnicos
 
 | Propiedad     | Valor                                      |
