@@ -18,10 +18,12 @@ ENV PS3DEV=/usr/local/ps3dev
 ENV PSL1GHT=${PS3DEV}
 ENV PATH=${PATH}:${PS3DEV}/bin:${PS3DEV}/ppu/bin:${PS3DEV}/spu/bin
 
-# 3. Clonar y construir el toolchain oficial
-# Nota: Este proceso puede tardar un par de horas ya que compila GCC varias veces [3]
+# 3. Clonar, parchear URLs y construir el toolchain
 RUN git clone --depth 1 https://github.com/ps3dev/ps3toolchain.git /tmp/ps3toolchain \
     && cd /tmp/ps3toolchain \
+    # REEMPLAZAR URL: Cambiamos ftp.gnu.org por un mirror funcional en todos los scripts
+    && sed -i 's|https://ftp.gnu.org/gnu/|https://ftp.wayne.edu/gnu/|g' scripts/*.sh \
+    && sed -i 's|http://ftp.gnu.org/gnu/|https://ftp.wayne.edu/gnu/|g' scripts/*.sh \
     &&./toolchain.sh \
     && rm -rf /tmp/ps3toolchain
 
