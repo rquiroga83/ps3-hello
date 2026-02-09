@@ -16,12 +16,14 @@ include $(PSL1GHT)/spu_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
+# BUILD is the directory where object files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
 TARGET		:= $(notdir $(CURDIR))
+BUILD		:= build
 SOURCES		:= source
-INCLUDES	:= ../../include
+INCLUDES	:= ../include
 
 CFLAGS		+= -O2 -Wall $(MACHDEP) $(INCLUDE)
 
@@ -31,7 +33,7 @@ LDFLAGS		:= -Wl,-N
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS		:=
+LIBS		:= -lsputhread
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -75,9 +77,12 @@ export INCLUDE	:= $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					$(LIBPSL1GHT_LIB)
 
-.PHONY: $(BUILD) clean
+.PHONY: all clean install
 
 #---------------------------------------------------------------------------------
+# El target por defecto ahora es build
+all: $(BUILD)
+
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
@@ -104,7 +109,7 @@ endif
 #---------------------------------------------------------------------------------
 
 # Copiar el binario SPU al directorio data/ del proyecto PPU
-install: $(BUILD)
-	@mkdir -p ../../data
-	@cp -f $(OUTPUT).elf ../../data/spu.bin
+install:
+	@mkdir -p ../data
+	@cp -f $(OUTPUT).elf ../data/spu.bin
 	@echo "SPU binary installed to data/spu.bin"

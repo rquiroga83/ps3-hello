@@ -20,7 +20,7 @@ include $(PSL1GHT)/ppu_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:= $(notdir $(CURDIR))
+TARGET		:= hello-ps3
 BUILD		:= build
 SOURCES		:= source
 DATA		:= data
@@ -67,7 +67,10 @@ export BUILDDIR	:= $(CURDIR)/$(BUILD)
 #---------------------------------------------------------------------------------
 CFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 SFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
-BINFILES	:= $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.bin)))
+# El archivo spu.bin se genera durante el build por el target spu, así que lo agregamos explícitamente
+BINFILES	:= spu.bin $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.bin)))
+# Remover duplicados en caso de que spu.bin ya exista
+BINFILES	:= $(sort $(BINFILES))
 
 export OFILES	:= $(addsuffix .o,$(BINFILES)) \
 					$(CFILES:.c=.o) \

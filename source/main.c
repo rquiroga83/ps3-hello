@@ -35,7 +35,7 @@ int main(int argc, const char *argv[])
     sysSpuThreadArgument arg;
     sysSpuThreadGroupAttribute grpattr;
     sysSpuThreadAttribute attr;
-    int cause, status;
+    u32 cause, status;
 
     printf("==============================================\n");
     printf("  Hola Mundo desde PlayStation 3!\n");
@@ -63,8 +63,8 @@ int main(int argc, const char *argv[])
 
     /* ---- Crear grupo de threads SPU ---- */
     memset(&grpattr, 0, sizeof(sysSpuThreadGroupAttribute));
-    grpattr.nameSize = 18;
-    grpattr.nameAddress = (u64)(uintptr_t)"vecmath_spu_group";
+    grpattr.nsize = 18;
+    grpattr.name = "vecmath_spu_group";
 
     sysSpuThreadGroupCreate(&group_id, 1, 100, &grpattr);
 
@@ -75,8 +75,8 @@ int main(int argc, const char *argv[])
     arg.arg0 = (u64)(uintptr_t)&spe_data;
 
     memset(&attr, 0, sizeof(sysSpuThreadAttribute));
-    attr.nameSize = 19;
-    attr.nameAddress = (u64)(uintptr_t)"vecmath_spu_thread";
+    attr.nsize = 19;
+    attr.name = "vecmath_spu_thread";
 
     sysSpuThreadInitialize(&thread_id, group_id, 0, &image, &attr, &arg);
     printf("[PPU] Thread SPU creado (group=%u, thread=%u)\n", group_id, thread_id);

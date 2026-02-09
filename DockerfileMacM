@@ -1,0 +1,4 @@
+# Imagen con el toolchain PS3 (ps3dev + PSL1GHT) pre-compilado
+FROM zeldin/ps3dev-docker:latest
+
+WORKDIR /src
