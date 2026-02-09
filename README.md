@@ -4,14 +4,31 @@ Un programa "Hola Mundo" homebrew para **PlayStation 3**, compilado con el toolc
 
 ## Descripción
 
-Este proyecto es un ejemplo mínimo de desarrollo homebrew para PS3. Imprime `¡Hola Mundo desde PlayStation 3!` utilizando las herramientas de compilación cruzada del ecosistema ps3dev.
+Este proyecto es un ejemplo de desarrollo homebrew para PS3 que demuestra el uso de los **Synergistic Processing Elements (SPEs)** del procesador Cell Broadband Engine. El programa envía un vector de 4 floats a un SPE, que realiza cálculos SIMD en paralelo (cuadrados, producto punto, magnitud) y devuelve los resultados al PPU.
+
+### ¿Qué hace el ejemplo SPE?
+
+1. **PPU** (PowerPC Processing Unit): Prepara un vector `(1.0, 2.0, 3.0, 4.0)` y crea un thread SPU
+2. **SPE** (Synergistic Processing Element): Recibe el vector via **DMA**, calcula:
+   - **Cuadrados** de cada componente usando multiplicación SIMD paralela: `(1, 4, 9, 16)`
+   - **Producto punto** (norma²): `1² + 2² + 3² + 4² = 30.0`
+   - **Magnitud** usando la instrucción `rsqrte` del SPE: `≈ 5.4772`
+3. **PPU**: Lee los resultados transferidos por DMA y los muestra en pantalla
 
 ## Estructura del proyecto
 
 ```
 .
-├── main.c                      # Código fuente principal
-├── Makefile                    # Sistema de compilación (usa ppu_rules de PSL1GHT)
+├── source/
+│   └── main.c                  # Programa PPU (gestión de threads SPU)
+├── spu/
+│   ├── source/
+│   │   └── main.c              # Programa SPU (cálculo vectorial SIMD)
+│   └── Makefile                # Compilación del programa SPU (spu_rules)
+├── include/
+│   └── vecmath.h               # Estructura compartida PPU ↔ SPU
+├── data/                       # Binario SPU compilado (spu.bin)
+├── Makefile                    # Makefile principal PPU (ppu_rules + bin2o)
 ├── Dockerfile                  # Dockerfile raíz (referencia)
 └── .devcontainer/
     ├── Dockerfile              # Imagen Docker con el toolchain PS3 completo
@@ -52,10 +69,13 @@ make
 
 Esto generará:
 
-| Archivo          | Descripción                                  |
-|------------------|----------------------------------------------|
-| `hola_ps3.elf`   | Ejecutable ELF para PPU                      |
-| `hola_ps3.self`  | Ejecutable firmado (listo para correr en PS3) |
+| Archivo          | Descripción                                    |
+|------------------|------------------------------------------------|
+| `data/spu.bin`   | Programa SPU compilado (embebido en el ELF)    |
+| `hola-ps3.elf`   | Ejecutable ELF para PPU con SPU embebido       |
+| `hola-ps3.self`  | Ejecutable firmado (listo para correr en PS3)  |
+
+> **Nota:** El Makefile primero compila el programa SPU (`spu/`), luego lo embebe en el ejecutable PPU usando `bin2o`.
 
 ### 4. Ejecutar en PS3 (CFW)
 
@@ -119,12 +139,40 @@ Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/
 
 | Propiedad     | Valor                                      |
 |---------------|---------------------------------------------|
-| **Target**    | `hola_ps3`                                  |
+| **Target**    | `hola-ps3`                                  |
 | **Content ID**| `UP0001-PSL145310_00-0000000000000001`      |
 | **App ID**    | `PSL145310`                                 |
 | **Toolchain** | ps3toolchain (GCC cross-compiler PPU/SPU)   |
 | **SDK**       | PSL1GHT                                     |
 | **Base OS**   | Debian Bookworm (contenedor Docker)         |
+
+### Arquitectura Cell Broadband Engine
+
+```
+┌─────────────────────────────────────────────────┐
+│              Cell Broadband Engine               │
+│                                                  │
+│  ┌─────────┐    ┌─────┐ ┌─────┐ ┌─────┐        │
+│  │   PPU   │    │ SPE │ │ SPE │ │ SPE │        │
+│  │ PowerPC │    │  0  │ │  1  │ │  2  │        │
+│  │  64-bit │    │256KB│ │256KB│ │256KB│        │
+│  └────┬────┘    └──┬──┘ └──┬──┘ └──┬──┘        │
+│       │            │       │       │             │
+│  ═════╪════════════╪═══════╪═══════╪═══════════  │
+│       │     Element Interconnect Bus (EIB)       │
+│  ═════╪════════════╪═══════╪═══════╪═══════════  │
+│       │            │       │       │             │
+│  ┌────┴────┐    ┌──┴──┐ ┌──┴──┐ ┌──┴──┐        │
+│  │   MIC   │    │ SPE │ │ SPE │ │ SPE │        │
+│  │ Memory  │    │  3  │ │  4  │ │  5  │        │
+│  │Interface│    │256KB│ │256KB│ │256KB│        │
+│  └─────────┘    └─────┘ └─────┘ └─────┘        │
+│                                                  │
+│  PPU: Controla el flujo del programa             │
+│  SPE: 128-bit SIMD, cálculo masivo paralelo      │
+│  DMA: Transferencia asíncrona entre RAM y SPE    │
+└─────────────────────────────────────────────────┘
+```
 
 ## Licencia
 

@@ -1,5 +1,5 @@
 #---------------------------------------------------------------------------------
-# PPU Makefile - Hola PS3 con ejemplo SPE
+# SPU Makefile - Compila el programa que correrá en los Synergistic Processing Elements
 #---------------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------
@@ -12,23 +12,16 @@ ifeq ($(strip $(PSL1GHT)),)
 $(error "Please set PSL1GHT in your environment. export PSL1GHT=<path>")
 endif
 
-include $(PSL1GHT)/ppu_rules
+include $(PSL1GHT)/spu_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
 TARGET		:= $(notdir $(CURDIR))
-BUILD		:= build
 SOURCES		:= source
-DATA		:= data
-INCLUDES	:= include
-
-TITLE		:= Hola Mundo PS3 - SPE Demo
-APPID		:= PSL145310
-CONTENTID	:= UP0001-PSL145310_00-0000000000000001
+INCLUDES	:= ../../include
 
 CFLAGS		+= -O2 -Wall $(MACHDEP) $(INCLUDE)
 
@@ -38,7 +31,7 @@ LDFLAGS		:= -Wl,-N
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS		:= -lrt -llv2 -lm
+LIBS		:=
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -48,38 +41,33 @@ LIBDIRS		:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
+# temporary variables or additional rules
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
 export OUTPUT	:= $(CURDIR)/$(TARGET)
 
-export VPATH	:= $(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
-					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
+export VPATH	:= $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 
-export DEPSDIR	:= $(CURDIR)/$(BUILD)
+export DEPSDIR	:= $(CURDIR)/build
 
-export BUILDDIR	:= $(CURDIR)/$(BUILD)
+export BUILDDIR	:= $(CURDIR)/build
 
 #---------------------------------------------------------------------------------
 # automatically build a list of object files for our project
 #---------------------------------------------------------------------------------
 CFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 SFILES		:= $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
-BINFILES	:= $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.bin)))
 
-export OFILES	:= $(addsuffix .o,$(BINFILES)) \
-					$(CFILES:.c=.o) \
-					$(SFILES:.S=.o)
+export OFILES	:= $(CFILES:.c=.o) $(SFILES:.S=.o)
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
 #---------------------------------------------------------------------------------
 export INCLUDE	:= $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-					$(LIBPSL1GHT_INC) \
-					-I$(CURDIR)/$(BUILD)
+					$(LIBPSL1GHT_INC)
 
 #---------------------------------------------------------------------------------
 # build a list of library paths
@@ -87,17 +75,7 @@ export INCLUDE	:= $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					$(LIBPSL1GHT_LIB)
 
-.PHONY: $(BUILD) clean spu
-
-#---------------------------------------------------------------------------------
-# Primero compilar el programa SPU, luego el PPU
-#---------------------------------------------------------------------------------
-all: spu $(BUILD)
-	@echo "Build complete: $(TARGET)"
-
-spu:
-	@$(MAKE) -C spu
-	@$(MAKE) -C spu install
+.PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
 $(BUILD):
@@ -107,15 +85,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).self data/spu.bin
-	@$(MAKE) -C spu clean
-
-#---------------------------------------------------------------------------------
-# Generar .self y .pkg
-#---------------------------------------------------------------------------------
-pkg: all
-	@$(MAKE_SELF) $(OUTPUT).elf $(OUTPUT).self $(CONTENTID)
-	@$(MAKE_PKG) --content-id $(CONTENTID) $(OUTPUT).pkg $(CURDIR)/USRDIR
+	@rm -fr build $(OUTPUT).elf
 
 #---------------------------------------------------------------------------------
 else
@@ -127,14 +97,14 @@ DEPENDS	:= $(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 $(OUTPUT).elf: $(OFILES)
 
-#---------------------------------------------------------------------------------
-# This rule links in binary data with the .bin extension
-#---------------------------------------------------------------------------------
-%.bin.o: %.bin
-	@echo $(notdir $<)
-	@$(bin2o) $< $(notdir $(<:.bin=_bin)) $@
-
 -include $(DEPENDS)
 
 #---------------------------------------------------------------------------------
 endif
+#---------------------------------------------------------------------------------
+
+# Copiar el binario SPU al directorio data/ del proyecto PPU
+install: $(BUILD)
+	@mkdir -p ../../data
+	@cp -f $(OUTPUT).elf ../../data/spu.bin
+	@echo "SPU binary installed to data/spu.bin"
