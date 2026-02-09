@@ -47,7 +47,6 @@ Este proyecto es un ejemplo de desarrollo homebrew para PS3 que demuestra el uso
 La imagen compila todo el toolchain PS3 desde cero (puede tardar **30-60+ minutos** la primera vez):
 
 ```bash
-cd .devcontainer
 docker build -t ps3dev-local .
 ```
 
@@ -150,27 +149,27 @@ Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/
 
 ```
 ┌─────────────────────────────────────────────────┐
-│              Cell Broadband Engine               │
-│                                                  │
-│  ┌─────────┐    ┌─────┐ ┌─────┐ ┌─────┐        │
-│  │   PPU   │    │ SPE │ │ SPE │ │ SPE │        │
-│  │ PowerPC │    │  0  │ │  1  │ │  2  │        │
-│  │  64-bit │    │256KB│ │256KB│ │256KB│        │
-│  └────┬────┘    └──┬──┘ └──┬──┘ └──┬──┘        │
-│       │            │       │       │             │
-│  ═════╪════════════╪═══════╪═══════╪═══════════  │
-│       │     Element Interconnect Bus (EIB)       │
-│  ═════╪════════════╪═══════╪═══════╪═══════════  │
-│       │            │       │       │             │
-│  ┌────┴────┐    ┌──┴──┐ ┌──┴──┐ ┌──┴──┐        │
-│  │   MIC   │    │ SPE │ │ SPE │ │ SPE │        │
-│  │ Memory  │    │  3  │ │  4  │ │  5  │        │
-│  │Interface│    │256KB│ │256KB│ │256KB│        │
-│  └─────────┘    └─────┘ └─────┘ └─────┘        │
-│                                                  │
-│  PPU: Controla el flujo del programa             │
-│  SPE: 128-bit SIMD, cálculo masivo paralelo      │
-│  DMA: Transferencia asíncrona entre RAM y SPE    │
+│              Cell Broadband Engine              │
+│                                                 │
+│  ┌─────────┐    ┌─────┐ ┌─────┐ ┌─────┐         │
+│  │   PPU   │    │ SPE │ │ SPE │ │ SPE │         │
+│  │ PowerPC │    │  0  │ │  1  │ │  2  │         │
+│  │  64-bit │    │256KB│ │256KB│ │256KB│         │
+│  └────┬────┘    └──┬──┘ └──┬──┘ └──┬──┘         │
+│       │            │       │       │            │
+│  ═════╪════════════╪═══════╪═══════╪═══════════ │
+│       │     Element Interconnect Bus (EIB)      │
+│  ═════╪════════════╪═══════╪═══════╪═══════════ │
+│       │            │       │       │            │
+│  ┌────┴────┐    ┌──┴──┐ ┌──┴──┐ ┌──┴──┐         │
+│  │   MIC   │    │ SPE │ │ SPE │ │ SPE │         │
+│  │ Memory  │    │  3  │ │  4  │ │  5  │         │
+│  │Interface│    │256KB│ │256KB│ │256KB│         │
+│  └─────────┘    └─────┘ └─────┘ └─────┘         │
+│                                                 │
+│  PPU: Controla el flujo del programa            │
+│  SPE: 128-bit SIMD, cálculo masivo paralelo     │
+│  DMA: Transferencia asíncrona entre RAM y SPE   │
 └─────────────────────────────────────────────────┘
 ```
 
