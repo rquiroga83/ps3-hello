@@ -68,17 +68,18 @@ make
 
 Esto generará:
 
-| Archivo          | Descripción                                    |
-|------------------|------------------------------------------------|
-| `data/spu.bin`   | Programa SPU compilado (embebido en el ELF)    |
-| `hola-ps3.elf`   | Ejecutable ELF para PPU con SPU embebido       |
-| `hola-ps3.self`  | Ejecutable firmado (listo para correr en PS3)  |
+| Archivo           | Descripción                                    |
+|-------------------|------------------------------------------------|
+| `spu/spu.elf`     | Ejecutable SPU (Synergistic Processing Element)|
+| `data/spu.bin`    | Programa SPU compilado (embebido en el ELF)    |
+| `hello-ps3.elf`   | Ejecutable ELF para PPU con SPU embebido       |
+| `hello-ps3.self`  | Ejecutable firmado (listo para correr en PS3)  |
 
-> **Nota:** El Makefile primero compila el programa SPU (`spu/`), luego lo embebe en el ejecutable PPU usando `bin2o`.
+> **Nota:** El Makefile primero compila el programa SPU (`spu/`), lo copia a `data/spu.bin`, y luego lo embebe en el ejecutable PPU usando `bin2o`.
 
 ### 4. Ejecutar en PS3 (CFW)
 
-Transfiere el archivo `hola_ps3.self` a tu consola PS3 con CFW (Custom Firmware) mediante FTP o USB y ejecútalo desde un file manager como **multiMAN** o **webMAN**.
+Transfiere el archivo `hello-ps3.self` a tu consola PS3 con CFW (Custom Firmware) mediante FTP o USB y ejecútalo desde un file manager como **multiMAN** o **webMAN**.
 
 ### 5. Ejecutar en PS3 (HEN)
 
@@ -93,13 +94,13 @@ Transfiere el archivo `hola_ps3.self` a tu consola PS3 con CFW (Custom Firmware)
 #### Transferir y ejecutar el homebrew
 
 1. **Vía USB:**
-   - Crea la ruta `PS3/SAVEDATA/` o simplemente copia `hola_ps3.self` a una memoria USB.
+   - Crea la ruta `PS3/SAVEDATA/` o simplemente copia `hello-ps3.self` a una memoria USB.
    - Conecta la USB a la PS3 y usa un file manager como **multiMAN** (instalable como `.pkg`) para navegar y ejecutar el archivo.
 
 2. **Vía FTP:**
    - Instala un servidor FTP como **webMAN MOD** (disponible como `.pkg`).
    - Conéctate desde tu PC con un cliente FTP (FileZilla, WinSCP, etc.) a la IP de tu PS3.
-   - Sube `hola_ps3.self` a `/dev_hdd0/game/` o cualquier ubicación accesible.
+   - Sube `hello-ps3.self` a `/dev_hdd0/game/` o cualquier ubicación accesible.
    - Ejecuta desde multiMAN o el file manager.
 
 3. **Como PKG instalable** *(recomendado)*:
@@ -121,7 +122,7 @@ Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/
    - En RPCS3 ve a **File → Install Firmware** y selecciona el archivo `PS3UPDAT.PUP`.
 
 3. **Ejecutar el homebrew:**
-   - Ve a **File → Boot (S)ELF / (S)SELF** y selecciona el archivo `hola_ps3.self`.
+   - Ve a **File → Boot (S)ELF / (S)SELF** y selecciona el archivo `hello-ps3.self`.
    - Alternativamente, puedes arrastrar el archivo `.self` directamente a la ventana de RPCS3.
 
 4. **Crear un PKG instalable** *(opcional)*:
@@ -136,14 +137,15 @@ Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/
 
 ## Detalles técnicos
 
-| Propiedad     | Valor                                      |
-|---------------|---------------------------------------------|
-| **Target**    | `hola-ps3`                                  |
-| **Content ID**| `UP0001-PSL145310_00-0000000000000001`      |
-| **App ID**    | `PSL145310`                                 |
-| **Toolchain** | ps3toolchain (GCC cross-compiler PPU/SPU)   |
-| **SDK**       | PSL1GHT                                     |
-| **Base OS**   | Debian Bookworm (contenedor Docker)         |
+| Propiedad      | Valor                                      |
+|----------------|---------------------------------------------|
+| **Target**     | `hello-ps3`                                 |
+| **Ejecutable** | `hello-ps3.elf` / `hello-ps3.self`          |
+| **Content ID** | `UP0001-PSL145310_00-0000000000000001`      |
+| **App ID**     | `PSL145310`                                 |
+| **Toolchain**  | ps3toolchain (GCC cross-compiler PPU/SPU)   |
+| **SDK**        | PSL1GHT                                     |
+| **Base OS**    | Debian Bookworm (contenedor Docker)         |
 
 ### Arquitectura Cell Broadband Engine
 
