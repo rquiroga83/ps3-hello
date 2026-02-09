@@ -57,11 +57,41 @@ Esto generará:
 | `hola_ps3.elf`   | Ejecutable ELF para PPU                      |
 | `hola_ps3.self`  | Ejecutable firmado (listo para correr en PS3) |
 
-### 4. Ejecutar en PS3
+### 4. Ejecutar en PS3 (CFW)
 
 Transfiere el archivo `hola_ps3.self` a tu consola PS3 con CFW (Custom Firmware) mediante FTP o USB y ejecútalo desde un file manager como **multiMAN** o **webMAN**.
 
-### 5. Ejecutar en emulador (RPCS3)
+### 5. Ejecutar en PS3 (HEN)
+
+[PS3HEN](https://www.psx-place.com/threads/ps3hen.23369/) (Homebrew Enabler) permite correr homebrew en **cualquier PS3** con firmware oficial (OFW), sin necesidad de un Custom Firmware completo. Es compatible con todos los modelos, incluyendo Super Slim.
+
+#### Instalación de HEN
+
+1. Asegúrate de tener tu PS3 en el **firmware más reciente** (o el requerido por la versión de HEN).
+2. Desde el navegador web de la PS3, accede al sitio del exploit HEN (por ejemplo, `http://ps3xploit.me/hen`).
+3. Sigue las instrucciones en pantalla para habilitar HEN. Al reiniciar la consola, deberás activar HEN nuevamente desde el navegador (no es permanente).
+
+#### Transferir y ejecutar el homebrew
+
+1. **Vía USB:**
+   - Crea la ruta `PS3/SAVEDATA/` o simplemente copia `hola_ps3.self` a una memoria USB.
+   - Conecta la USB a la PS3 y usa un file manager como **multiMAN** (instalable como `.pkg`) para navegar y ejecutar el archivo.
+
+2. **Vía FTP:**
+   - Instala un servidor FTP como **webMAN MOD** (disponible como `.pkg`).
+   - Conéctate desde tu PC con un cliente FTP (FileZilla, WinSCP, etc.) a la IP de tu PS3.
+   - Sube `hola_ps3.self` a `/dev_hdd0/game/` o cualquier ubicación accesible.
+   - Ejecuta desde multiMAN o el file manager.
+
+3. **Como PKG instalable** *(recomendado)*:
+   - Si generas un `.pkg`, puedes instalarlo directamente desde el XMB:
+     - Copia el `.pkg` a una USB en la raíz.
+     - En la PS3 ve a **Juego → Package Manager → Install Package Files → Standard**.
+     - La aplicación aparecerá en el XMB como cualquier juego.
+
+> **Importante:** HEN se desactiva al reiniciar la consola. Deberás habilitarlo de nuevo desde el navegador cada vez que enciendas la PS3.
+
+### 6. Ejecutar en emulador (RPCS3)
 
 Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/):
 
