@@ -1,0 +1,19 @@
+# Archivos compilados
+*.elf
+*.self
+*.ppu.o
+*.spu.o
+*.bin
+*.pkg
+
+# Directorios de build
+build/
+obj/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/tasks.json

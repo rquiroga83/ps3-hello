@@ -1,0 +1,9 @@
+{
+    "name": "PS3 Dev",
+    "image": "ps3dev-local:latest",
+    "customizations": {
+        "vscode": {
+            "extensions": ["ms-vscode.cpptools"]
+        }
+    }
+}
