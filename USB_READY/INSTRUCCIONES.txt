@@ -1,0 +1,80 @@
+
+   INSTRUCCIONES PARA INSTALAR EN PS3 DESDE USB
+
+
+
+USB_READY/
+ PS3/
+    └── GAME/
+        └── HOLA00001/           ← Copia esta carpeta
+            ├── PARAM.SFO        ✅ Metadata
+            ├── ICON0.PNG        ✅ Icono
+            └── USRDIR/
+                └── EBOOT.BIN    ✅ Ejecutable
+
+
+
+
+1️⃣  PREPARAR USB:
+   - Formatea USB en FAT32 (si no lo está)
+   - Crea carpeta: PS3/GAME/ en la raíz del USB
+   
+2️⃣  COPIAR ARCHIVOS:
+   - Copia la carpeta HOLA00001/ completa a: 
+     USB:/PS3/GAME/HOLA00001/
+   
+   Estructura final en USB:
+   USB:/
+   └── PS3/
+       └── GAME/
+           └── HOLA00001/
+               ├── PARAM.SFO
+               ├── ICON0.PNG
+               └── USRDIR/
+                   └── EBOOT.BIN
+
+3️⃣  ACTIVAR HEN:
+   - Conecta el USB al PS3
+   - IMPORTANTE: Activa HEN primero
+     (Navegador Web → PS3HEN → Activar)
+
+4️⃣  EJECUTAR:
+   - XMB → Game
+   - Busca el icono "HOLA PS3"
+   - Presiona X para ejecutar
+
+
+ PROBLEMAS COMUNES:
+
+
+PROBLEMA: No aparece en XMB
+SOLUCIÓN: 
+  - Verifica que la carpeta esté en: USB:/PS3/GAME/
+  - La carpeta debe llamarse HOLA00001 (o cualquier código)
+  - Debe tener PARAM.SFO en la raíz de HOLA00001/
+
+PROBLEMA: Aparece "datos dañados"
+SOLUCIÓN:
+  - Verifica que HEN esté activado
+  - El EBOOT.BIN debe estar en USRDIR/
+  - Usa el PKG en su lugar (más fácil)
+
+PROBLEMA: Pantalla negra y vuelve al XMB
+SOLUCIÓN:
+  - Verifica firmware (debe ser 4.88 HEN compatible)
+  - Activa HEN antes de ejecutar
+  - Prueba el PKG instalable
+
+
+
+
+Si tienes problemas con el método USB, usa el PKG:
+
+1. Copia hello-ps3.pkg a USB (raíz)
+2. PS3: Package Manager → Install Package Files
+3. Instalación automática ✅
+
+El PKG es MÁS CONFIABLE para HEN 4.88.
+
+
+
