@@ -35,7 +35,7 @@ LDFLAGS		= $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS		:= -lrt -llv2
+LIBS		:= -lgcm_sys -lrsx -lsysutil -lio -lrt -llv2
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -99,12 +99,14 @@ clean:
 pkg: all
 	@echo "Generating PKG..."
 	@mkdir -p pkg_temp/USRDIR
-	@fself $(OUTPUT).elf pkg_temp/USRDIR/EBOOT.BIN
+	@make_self $(OUTPUT).elf pkg_temp/USRDIR/EBOOT.BIN
 	@python3 $(CURDIR)/scripts/create_sfo.py "$(TITLE)" "$(APPID)" pkg_temp/PARAM.SFO
+	@python3 $(CURDIR)/scripts/create_icon.py pkg_temp/ICON0.PNG
 	@cp -f pkg_temp/PARAM.SFO /PARAM.SFO
+	@cp -f pkg_temp/ICON0.PNG /ICON0.PNG
 	@mkdir -p /USRDIR && cp -f pkg_temp/USRDIR/EBOOT.BIN /USRDIR/EBOOT.BIN
 	@python3 /usr/local/ps3dev/bin/pkg.py --contentid=$(CONTENTID) pkg_temp $(OUTPUT).pkg
-	@rm -f /PARAM.SFO /USRDIR/EBOOT.BIN && rmdir /USRDIR 2>/dev/null || true
+	@rm -f /PARAM.SFO /ICON0.PNG /USRDIR/EBOOT.BIN && rmdir /USRDIR 2>/dev/null || true
 	@echo "PKG created: $(OUTPUT).pkg"
 
 #---------------------------------------------------------------------------------

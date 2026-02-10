@@ -1,32 +1,85 @@
 # 🎮 Hola Mundo PS3
 
-Un programa "Hola Mundo" homebrew para **PlayStation 3**, compilado con el toolchain [ps3toolchain](https://github.com/ps3dev/ps3toolchain) y el SDK [PSL1GHT](https://github.com/ps3dev/PSL1GHT).
+Un **ejemplo mínimo funcional** de homebrew para **PlayStation 3**, que muestra un mensaje gráfico en pantalla usando el sistema de renderizado RSX.
 
-## Descripción
+Compilado con el toolchain [ps3toolchain](https://github.com/ps3dev/ps3toolchain) y el SDK [PSL1GHT](https://github.com/ps3dev/PSL1GHT).
 
-Este proyecto es un ejemplo mínimo de desarrollo homebrew para PS3. El programa imprime un saludo en la consola TTY y termina.
+## 📝 Descripción
 
-## Estructura del proyecto
+Este proyecto es un **ejemplo educativo completo** de desarrollo homebrew para PS3. El programa:
+
+- ✅ Inicializa el sistema gráfico **RSX** (Reality Synthesizer - el chip gráfico de PS3)
+- ✅ Dibuja un mensaje visual colorido **"HOLA PS3"** en el centro de la pantalla
+- ✅ Maneja entrada del **controlador DualShock 3**
+- ✅ Implementa un **loop de aplicación** funcional
+- ✅ Usa **double buffering** para evitar tearing visual
+- ✅ Imprime mensajes de depuración en la **consola TTY**
+
+### 🎨 ¿Qué verás en pantalla?
+
+El programa dibuja un mensaje visual compuesto por:
+- Fondo **negro** (limpieza de pantalla)
+- Rectángulo central **azul** con borde **blanco**
+- Barra decorativa **verde** en la parte superior
+- Bloques de colores (**amarillo**, **rojo**, **blanco**) simulando texto "PS3"
+- Línea decorativa inferior
+
+**Controles:**
+- Presiona **✖ (X/Cross)** en el control para salir del programa
+
+## 📂 Estructura del proyecto
 
 ```
 .
 ├── source/
-│   └── main.c                  # Programa PPU (Hello World)
+│   └── main.c                  # Programa principal con gráficos RSX
 ├── scripts/
 │   └── create_sfo.py           # Generador de PARAM.SFO para PKG
-├── Makefile                    # Makefile principal (ppu_rules)
-├── Dockerfile                  # Dockerfile raíz (referencia)
-├── DockerfileMacM              # Dockerfile alternativo para Mac M-series
+├── build/                      # Archivos de compilación (generados)
+├── pkg_temp/                   # Archivos temporales para PKG (generados)
+├── Makefile                    # Build system (ppu_rules)
+├── README.md                   # Este archivo
+├── EXPLICACION.md              # 📚 Explicación técnica detallada del código
+├── MODIFICACIONES.md           # 🎨 Guía de modificaciones y ejemplos
+├── Dockerfile                  # Imagen Docker para compilación
+├── DockerfileMacM              # Dockerfile para Mac M-series
 └── .devcontainer/
     └── devcontainer.json       # Configuración de Dev Container para VS Code
 ```
 
-## Requisitos previos
+## 📖 Documentación
+
+Este proyecto incluye documentación completa:
+
+- **[README.md](README.md)** (este archivo) - Inicio rápido y setup
+- **[EXPLICACION.md](EXPLICACION.md)** - Explicación técnica detallada:
+  - Arquitectura de PS3 (Cell, RSX)
+  - Sistema gráfico y framebuffers
+  - Explicación línea por línea del código
+  - Conceptos avanzados (GCM, memory alignment, etc.)
+  - Referencias y recursos externos
+
+- **[MODIFICACIONES.md](MODIFICACIONES.md)** - Guía práctica de modificaciones:
+  - Cambiar colores y tamaños
+  - Agregar nuevas formas (círculos, líneas, gradientes)
+  - Implementar animaciones simples
+  - Personalizar controles
+  - Ejemplos completos de código interactivo
+
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - 🔧 Solución de problemas:
+  - Error "datos dañados" al instalar PKG
+  - Problemas comunes de instalación
+  - Verificación de PKG y archivos
+  - Herramientas de diagnóstico
+
+- **[FLUJO.md](FLUJO.md)** - Diagramas de flujo de ejecución
+
+## 💡 Requisitos previos
 
 - [Docker](https://www.docker.com/) instalado
 - [VS Code](https://code.visualstudio.com/) con la extensión [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-## Inicio rápido
+## 🚀 Inicio rápido
 
 ### 1. Construir la imagen Docker
 
@@ -49,7 +102,8 @@ Esto levantará el entorno con todas las herramientas listas (`ppu-gcc`, `ppu-as
 Dentro del contenedor:
 
 ```bash
-make
+make           # Compilar el ejecutable
+make pkg       # Crear el paquete PKG instalable
 ```
 
 Esto generará:
@@ -57,12 +111,39 @@ Esto generará:
 | Archivo           | Descripción                                    |
 |-------------------|------------------------------------------------|
 | `hello-ps3.elf`   | Ejecutable ELF para PPU                        |
+| `hello-ps3.self`  | Ejecutable firmado para PS3                    |
+| `hello-ps3.pkg`   | Paquete instalable (recomendado)               |
 
-### 4. Ejecutar en PS3 (CFW)
+### 4. Instalar en PS3 (usando PKG)
 
-Transfiere el archivo `hello-ps3.self` a tu consola PS3 con CFW (Custom Firmware) mediante FTP o USB y ejecútalo desde un file manager como **multiMAN** o **webMAN**.
+**Método recomendado** - Instala como una aplicación real:
 
-### 5. Ejecutar en PS3 (HEN)
+1. Transfiere `hello-ps3.pkg` a tu PS3 mediante:
+   - **FTP** (usando FileZilla o similar)
+   - **USB** (en la carpeta raíz del USB)
+   - **Servidor web local** (desde el navegador de PS3)
+
+2. En la PS3:
+   - Ve a **Package Manager** o **Install Package Files**
+   - Selecciona el archivo `hello-ps3.pkg`
+   - Instala (aparecerá en el XMB)
+   - Ejecuta "Hola Mundo PS3" desde el menú
+
+### 5. Ejecutar directamente (archivo SELF)
+
+También puedes ejecutar `hello-ps3.self` directamente con un file manager:
+- **multiMAN**, **webMAN**, **IRISMAN**, etc.
+
+## 📱 Requisitos de la PS3
+
+### Opción A: Custom Firmware (CFW)
+
+Cualquier PS3 compatible con CFW puede ejecutar este homebrew:
+- PS3 Fat (CECH-xxxx)
+- PS3 Slim hasta modelo 3000
+- **Firmwares recomendados:** Rebug, Ferrox, IRISMAN CFW
+
+### Opción B: PS3HEN (Homebrew Enabler)
 
 [PS3HEN](https://www.psx-place.com/threads/ps3hen.23369/) (Homebrew Enabler) permite correr homebrew en **cualquier PS3** con firmware oficial (OFW), sin necesidad de un Custom Firmware completo. Es compatible con todos los modelos, incluyendo Super Slim.
 

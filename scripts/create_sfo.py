@@ -26,7 +26,7 @@ entries = [
     ("CATEGORY", TYPE_UTF8_SPECIAL, "HG"),
     ("LICENSE", TYPE_UTF8, "Copyright Notice"),
     ("PARENTAL_LEVEL", TYPE_INT32, 0),
-    ("PS3_SYSTEM_VER", TYPE_UTF8, "01.0000"),
+    ("PS3_SYSTEM_VER", TYPE_UTF8, "04.8800"),
     ("RESOLUTION", TYPE_INT32, 63),
     ("SOUND_FORMAT", TYPE_INT32, 1),
     ("TITLE", TYPE_UTF8_SPECIAL, title),
