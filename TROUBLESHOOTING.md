@@ -96,8 +96,126 @@ pkg_temp/
 ├── PARAM.SFO      ✓ Metadata del paquete
 ├── ICON0.PNG      ✓ Ícono 320x176 (OBLIGATORIO)
 └── USRDIR/
-    └── EBOOT.BIN  ✓ Ejecutable firmado con fself
+    └── EBOOT.BIN  ✓ Ejecutable firmado con make_self
 ```
+
+---
+
+## Solución 3: PS3_SYSTEM_VER Incorrecto (PS3 4.88 HEN)
+
+### Síntomas
+- El PKG instala correctamente (icono visible)
+- Al ejecutar: "datos dañados"
+- EBOOT.BIN correcto (88KB, firmado con make_self)
+- Problema persiste después de reinstalar
+
+### Causa Principal
+El campo `PS3_SYSTEM_VER` en PARAM.SFO debe coincidir con la versión del firmware.
+
+**Según PSDevWiki:**
+> *"PS3_SYSTEM_VER: Minimum PS3 System Software required for the content to be bootable. Format: XX.YYYY"*
+
+Si el valor no coincide, el PS3 puede rechazar la ejecución con "datos dañados".
+
+### Verificación
+
+**Revisa tu firmware:**
+- XMB → Settings → System Settings → System Information
+- Versiones comunes HEN: 4.88, 4.89, 4.90, 4.91
+
+**Verifica el PARAM.SFO actual:**
+```bash
+strings pkg_temp/PARAM.SFO | grep -A1 "PS3_SYSTEM_VER"
+```
+
+### Solución
+
+**✅ Para PS3 4.88 HEN (YA CORREGIDO):**
+
+El código actual usa `PS3_SYSTEM_VER = "04.8800"` en `scripts/create_sfo.py`.
+
+**Para otras versiones**, modifica línea 28 en [scripts/create_sfo.py](scripts/create_sfo.py):
+
+```python
+# Firmware 4.88 (actual)
+("PS3_SYSTEM_VER", TYPE_UTF8, "04.8800"),
+
+# Firmware 4.89
+("PS3_SYSTEM_VER", TYPE_UTF8, "04.8900"),
+
+# Firmware 4.90
+("PS3_SYSTEM_VER", TYPE_UTF8, "04.9000"),
+
+# Firmware 4.91
+("PS3_SYSTEM_VER", TYPE_UTF8, "04.9100"),
+```
+
+**Regenera el PKG:**
+```bash
+rm -rf pkg_temp hello-ps3.pkg
+make pkg
+```
+
+---
+
+## 🔧 Instrucciones Específicas para HEN (4.88)
+
+Si usas **HEN** (Homebrew ENabler) en lugar de CFW completo:
+
+### 1️⃣ Desinstalar PKG Anterior
+```
+XMB → Game → [HOLA PS3]
+Presiona TRIÁNGULO → Borrar
+Confirma eliminación
+```
+
+### 2️⃣ Reiniciar PS3
+Obligatorio para limpiar caché del XMB.
+
+### 3️⃣ Activar HEN
+```
+Navegador Web → PS3HEN → Activar
+```
+⚠️ **CRÍTICO:** HEN NO es persistente - se desactiva al apagar.
+
+### 4️⃣ Instalar Nuevo PKG
+
+**Método USB (recomendado):**
+```
+1. Copia hello-ps3.pkg a la raíz del USB
+2. Conecta USB al PS3
+3. XMB → Package Manager → Install Package Files
+4. Selecciona Standard → hello-ps3.pkg
+```
+
+**Método FTP:**
+```
+1. Copia a /dev_hdd0/packages/hello-ps3.pkg
+2. XMB → Package Manager → Install Package Files
+```
+
+### 5️⃣ Ejecutar
+
+```
+XMB → Game → HOLA PS3
+Presiona X para ejecutar
+```
+
+### ⚠️ Limitaciones de HEN vs CFW
+
+| Característica | HEN | CFW |
+|----------------|-----|-----|
+| Persistente después de apagar | ❌ No | ✅ Sí |
+| Permisos completos del sistema | ⚠️ Limitado | ✅ Completo |
+| Compatibilidad homebrew | ⚠️ ~80% | ✅ 100% |
+| Requiere activación manual | ✅ Sí | ❌ No |
+
+**Si el problema persiste después de estos pasos:**
+- HEN puede tener restricciones con homebrew que usa RSX intensivamente
+- Considera actualizar a CFW completo (Rebug, Evilnat, Ferrox)
+- Algunos homebrew complejos no son 100% compatibles con HEN
+
+---
 
 ### Verificar tu PKG
 
