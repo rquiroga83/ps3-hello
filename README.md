@@ -13,7 +13,7 @@ Este proyecto es un ejemplo mínimo de desarrollo homebrew para PS3. El programa
 ├── source/
 │   └── main.c                  # Programa PPU (Hello World)
 ├── scripts/
-│   └── fix_entry_toc.sh        # Parche post-link para el TOC del entry point
+│   └── create_sfo.py           # Generador de PARAM.SFO para PKG
 ├── Makefile                    # Makefile principal (ppu_rules)
 ├── Dockerfile                  # Dockerfile raíz (referencia)
 ├── DockerfileMacM              # Dockerfile alternativo para Mac M-series
@@ -159,10 +159,6 @@ El PKG incluye:
 | **Toolchain**  | ps3toolchain (GCC cross-compiler PPU)       |
 | **SDK**        | PSL1GHT                                     |
 | **Base OS**    | Debian Bookworm (contenedor Docker)         |
-
-### Nota sobre el parche de entry point
-
-El CRT de inicio (`lv2-crt0.o`) de PSL1GHT tiene un bug donde el descriptor de función `_start` en `.rodata` no incluye correctamente el TOC (Table of Contents). El script `scripts/fix_entry_toc.sh` corrige esto automáticamente después del enlazado, parchando el campo rtoc en el entry point del ELF.
 
 ## Licencia
 
