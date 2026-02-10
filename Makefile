@@ -79,7 +79,7 @@ export INCLUDE	:= $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 export LIBPATHS	:= $(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					$(LIBPSL1GHT_LIB)
 
-.PHONY: $(BUILD) clean
+.PHONY: $(BUILD) clean pkg self
 
 #---------------------------------------------------------------------------------
 all: $(BUILD)
@@ -94,6 +94,17 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).self $(OUTPUT).pkg pkg_temp USRDIR
+
+#---------------------------------------------------------------------------------
+self: all
+	@echo "Generating SELF..."
+	@make_self $(OUTPUT).elf $(OUTPUT).self
+	@echo "✅ SELF created: $(OUTPUT).self ($$(du -h $(OUTPUT).self | cut -f1))"
+	@echo ""
+	@echo "📋 Formas de usar el SELF:"
+	@echo "  1. Copia directa: Renombra a EBOOT.BIN → /dev_hdd0/game/TEST12345/USRDIR/"
+	@echo "  2. FTP: Reemplaza EBOOT.BIN en una app existente"
+	@echo "  3. Ver guía completa: USO_RAPIDO.md"
 
 #---------------------------------------------------------------------------------
 pkg: all
