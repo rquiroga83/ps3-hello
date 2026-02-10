@@ -4,34 +4,20 @@ Un programa "Hola Mundo" homebrew para **PlayStation 3**, compilado con el toolc
 
 ## Descripción
 
-Este proyecto es un ejemplo de desarrollo homebrew para PS3 que demuestra el uso de los **Synergistic Processing Elements (SPEs)** del procesador Cell Broadband Engine. El programa envía un vector de 4 floats a un SPE, que realiza cálculos SIMD en paralelo (cuadrados, producto punto, magnitud) y devuelve los resultados al PPU.
-
-### ¿Qué hace el ejemplo SPE?
-
-1. **PPU** (PowerPC Processing Unit): Prepara un vector `(1.0, 2.0, 3.0, 4.0)` y crea un thread SPU
-2. **SPE** (Synergistic Processing Element): Recibe el vector via **DMA**, calcula:
-   - **Cuadrados** de cada componente usando multiplicación SIMD paralela: `(1, 4, 9, 16)`
-   - **Producto punto** (norma²): `1² + 2² + 3² + 4² = 30.0`
-   - **Magnitud** usando la instrucción `rsqrte` del SPE: `≈ 5.4772`
-3. **PPU**: Lee los resultados transferidos por DMA y los muestra en pantalla
+Este proyecto es un ejemplo mínimo de desarrollo homebrew para PS3. El programa imprime un saludo en la consola TTY y termina.
 
 ## Estructura del proyecto
 
 ```
 .
 ├── source/
-│   └── main.c                  # Programa PPU (gestión de threads SPU)
-├── spu/
-│   ├── source/
-│   │   └── main.c              # Programa SPU (cálculo vectorial SIMD)
-│   └── Makefile                # Compilación del programa SPU (spu_rules)
-├── include/
-│   └── vecmath.h               # Estructura compartida PPU ↔ SPU
-├── data/                       # Binario SPU compilado (spu.bin)
-├── Makefile                    # Makefile principal PPU (ppu_rules + bin2o)
+│   └── main.c                  # Programa PPU (Hello World)
+├── scripts/
+│   └── fix_entry_toc.sh        # Parche post-link para el TOC del entry point
+├── Makefile                    # Makefile principal (ppu_rules)
 ├── Dockerfile                  # Dockerfile raíz (referencia)
+├── DockerfileMacM              # Dockerfile alternativo para Mac M-series
 └── .devcontainer/
-    ├── Dockerfile              # Imagen Docker con el toolchain PS3 completo
     └── devcontainer.json       # Configuración de Dev Container para VS Code
 ```
 
@@ -70,12 +56,7 @@ Esto generará:
 
 | Archivo           | Descripción                                    |
 |-------------------|------------------------------------------------|
-| `spu/spu.elf`     | Ejecutable SPU (Synergistic Processing Element)|
-| `data/spu.bin`    | Programa SPU compilado (embebido en el ELF)    |
-| `hello-ps3.elf`   | Ejecutable ELF para PPU con SPU embebido       |
-| `hello-ps3.self`  | Ejecutable firmado (listo para correr en PS3)  |
-
-> **Nota:** El Makefile primero compila el programa SPU (`spu/`), lo copia a `data/spu.bin`, y luego lo embebe en el ejecutable PPU usando `bin2o`.
+| `hello-ps3.elf`   | Ejecutable ELF para PPU                        |
 
 ### 4. Ejecutar en PS3 (CFW)
 
@@ -94,20 +75,19 @@ Transfiere el archivo `hello-ps3.self` a tu consola PS3 con CFW (Custom Firmware
 #### Transferir y ejecutar el homebrew
 
 1. **Vía USB:**
-   - Crea la ruta `PS3/SAVEDATA/` o simplemente copia `hello-ps3.self` a una memoria USB.
-   - Conecta la USB a la PS3 y usa un file manager como **multiMAN** (instalable como `.pkg`) para navegar y ejecutar el archivo.
+   - Copia `hello-ps3.self` a una memoria USB.
+   - Conecta la USB a la PS3 y usa un file manager como **multiMAN** para navegar y ejecutar el archivo.
 
 2. **Vía FTP:**
    - Instala un servidor FTP como **webMAN MOD** (disponible como `.pkg`).
-   - Conéctate desde tu PC con un cliente FTP (FileZilla, WinSCP, etc.) a la IP de tu PS3.
+   - Conéctate desde tu PC con un cliente FTP a la IP de tu PS3.
    - Sube `hello-ps3.self` a `/dev_hdd0/game/` o cualquier ubicación accesible.
    - Ejecuta desde multiMAN o el file manager.
 
 3. **Como PKG instalable** *(recomendado)*:
-   - Si generas un `.pkg`, puedes instalarlo directamente desde el XMB:
-     - Copia el `.pkg` a una USB en la raíz.
-     - En la PS3 ve a **Juego → Package Manager → Install Package Files → Standard**.
-     - La aplicación aparecerá en el XMB como cualquier juego.
+   - Genera un `.pkg` con `make pkg`.
+   - Copia el `.pkg` a una USB en la raíz.
+   - En la PS3 ve a **Juego → Package Manager → Install Package Files → Standard**.
 
 > **Importante:** HEN se desactiva al reiniciar la consola. Deberás habilitarlo de nuevo desde el navegador cada vez que enciendas la PS3.
 
@@ -115,25 +95,58 @@ Transfiere el archivo `hello-ps3.self` a tu consola PS3 con CFW (Custom Firmware
 
 Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/):
 
-1. **Descargar RPCS3** desde [rpcs3.net](https://rpcs3.net/download) (disponible para Windows, Linux y macOS).
+1. **Descargar RPCS3** desde [rpcs3.net](https://rpcs3.net/download).
+
+2. **Instalar el firmware de PS3:**
+   - Descarga el firmware oficial de Sony desde su sitio web.
+   - En RPCS3: File → Install Firmware → selecciona el archivo `.PUP`
+
+3. **Ejecutar el programa:**
+   - File → Boot (S)ELF / (S)SELF
+   - Selecciona `hello-ps3.self`
+   - La salida "hello, ps3" aparecerá en **View → Log → TTY**
+
+## Generación de PKG
+
+Para crear un paquete `.pkg` instalable:
+
+```bash
+make pkg
+```
+
+Esto genera `hello-ps3.pkg` que puede instalarse en:
+- PS3 con CFW usando Package Manager
+- PS3 con HEN usando Package Manager  
+- RPCS3 (File → Install Packages/Games)
+
+El PKG incluye:
+- `PARAM.SFO` con metadata (título, ID, versión)
+- `EBOOT.BIN` (SELF ejecutable)
+- Firma con Content ID: `UP0001-PSL145310_00-0000000000000001`
+
+## Archivos Generados
+
+| Archivo | Descripción | Tamaño aprox. |
+|---------|-------------|---------------|
+| `hello-ps3.elf` | Ejecutable ELF para PowerPC 64-bit | ~844 KB |
+| `hello-ps3.self` | Archivo SELF firmado | ~847 KB |
+| `hello-ps3.pkg` | Paquete PKG instalable | ~848 KB |
+
+## Notas Técnicas
+
+- **SDK:** PSL1GHT (lightweight PS3 SDK)
+- **Toolchain:** ps3toolchain (GCC 7.2.0 para PPU)
+- **Arquitectura:** PowerPC 64-bit Cell Broadband Engine
+- **Entry Point:** Usa `SYS_PROCESS_PARAM(1001, 0x100000)` estándar
+- **Salida:** TTY (Terminal output visible en debuggers/RPCS3)
 
 2. **Instalar el firmware de PS3:**
    - Descarga el firmware oficial desde [PlayStation.com](https://www.playstation.com/en-us/support/hardware/ps3/system-software/).
    - En RPCS3 ve a **File → Install Firmware** y selecciona el archivo `PS3UPDAT.PUP`.
 
 3. **Ejecutar el homebrew:**
-   - Ve a **File → Boot (S)ELF / (S)SELF** y selecciona el archivo `hello-ps3.self`.
-   - Alternativamente, puedes arrastrar el archivo `.self` directamente a la ventana de RPCS3.
-
-4. **Crear un PKG instalable** *(opcional)*:
-   Si prefieres instalar como aplicación en RPCS3, puedes empaquetar el `.self` en un `.pkg`:
-   ```bash
-   # Dentro del Dev Container (si las herramientas de empaquetado están disponibles)
-   make pkg
-   ```
-   Luego en RPCS3: **File → Install Packages/Raps/Edats** y selecciona el `.pkg`.
-
-> **Nota:** RPCS3 requiere un equipo con buenas prestaciones. Consulta la [guía de inicio rápido](https://rpcs3.net/quickstart) para los requisitos de sistema recomendados.
+   - Ve a **File → Boot (S)ELF / (S)SELF** y selecciona `hello-ps3.elf`.
+   - La salida se puede ver en **View → Log → TTY**.
 
 ## Detalles técnicos
 
@@ -143,37 +156,13 @@ Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/
 | **Ejecutable** | `hello-ps3.elf` / `hello-ps3.self`          |
 | **Content ID** | `UP0001-PSL145310_00-0000000000000001`      |
 | **App ID**     | `PSL145310`                                 |
-| **Toolchain**  | ps3toolchain (GCC cross-compiler PPU/SPU)   |
+| **Toolchain**  | ps3toolchain (GCC cross-compiler PPU)       |
 | **SDK**        | PSL1GHT                                     |
 | **Base OS**    | Debian Bookworm (contenedor Docker)         |
 
-### Arquitectura Cell Broadband Engine
+### Nota sobre el parche de entry point
 
-```
-┌─────────────────────────────────────────────────┐
-│              Cell Broadband Engine              │
-│                                                 │
-│  ┌─────────┐    ┌─────┐ ┌─────┐ ┌─────┐         │
-│  │   PPU   │    │ SPE │ │ SPE │ │ SPE │         │
-│  │ PowerPC │    │  0  │ │  1  │ │  2  │         │
-│  │  64-bit │    │256KB│ │256KB│ │256KB│         │
-│  └────┬────┘    └──┬──┘ └──┬──┘ └──┬──┘         │
-│       │            │       │       │            │
-│  ═════╪════════════╪═══════╪═══════╪═══════════ │
-│       │     Element Interconnect Bus (EIB)      │
-│  ═════╪════════════╪═══════╪═══════╪═══════════ │
-│       │            │       │       │            │
-│  ┌────┴────┐    ┌──┴──┐ ┌──┴──┐ ┌──┴──┐         │
-│  │   MIC   │    │ SPE │ │ SPE │ │ SPE │         │
-│  │ Memory  │    │  3  │ │  4  │ │  5  │         │
-│  │Interface│    │256KB│ │256KB│ │256KB│         │
-│  └─────────┘    └─────┘ └─────┘ └─────┘         │
-│                                                 │
-│  PPU: Controla el flujo del programa            │
-│  SPE: 128-bit SIMD, cálculo masivo paralelo     │
-│  DMA: Transferencia asíncrona entre RAM y SPE   │
-└─────────────────────────────────────────────────┘
-```
+El CRT de inicio (`lv2-crt0.o`) de PSL1GHT tiene un bug donde el descriptor de función `_start` en `.rodata` no incluye correctamente el TOC (Table of Contents). El script `scripts/fix_entry_toc.sh` corrige esto automáticamente después del enlazado, parchando el campo rtoc en el entry point del ELF.
 
 ## Licencia
 
