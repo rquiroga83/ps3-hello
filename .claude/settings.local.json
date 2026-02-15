@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /d/proyectos/ps3-hello log --oneline -15)",
+      "Bash(git -C /d/proyectos/ps3-hello config:*)",
+      "Bash(git -C /d/proyectos/ps3-hello remote:*)",
+      "Bash(git -C /d/proyectos/ps3-hello log:*)",
+      "Bash(docker run:*)",
+      "Bash(MSYS_NO_PATHCONV=1 docker run:*)",
+      "WebFetch(domain:notebooklm.google.com)",
+      "WebFetch(domain:deepwiki.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:forums.rpcs3.net)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

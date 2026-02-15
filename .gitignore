@@ -5,6 +5,7 @@
 *.spu.o
 *.bin
 *.pkg
+*.o
 
 # Directorios de build
 build/

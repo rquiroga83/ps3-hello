@@ -2,6 +2,8 @@
 
 Aplicacion homebrew para **PlayStation 3** que muestra texto en pantalla usando el framebuffer del RSX y lee entrada del control DualShock 3. Compilada con [PSL1GHT](https://github.com/ps3dev/PSL1GHT) y [ps3toolchain](https://github.com/ps3dev/ps3toolchain).
 
+![Screenshot en RPCS3](screenshot/screenshot.png)
+
 ## Que hace
 
 - Inicializa el GPU (RSX) con doble buffer XRGB a la resolucion nativa de la consola
