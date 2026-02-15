@@ -1,6 +1,6 @@
 # Hola Mundo PS3
 
-Aplicacion homebrew para **PlayStation 3** que muestra texto en pantalla usando el framebuffer del RSX y lee entrada del control DualShock 3. Compilada con [PSL1GHT](https://github.com/ps3dev/PSL1GHT) y [ps3toolchain](https://github.com/ps3dev/ps3toolchain).
+Aplicacion homebrew para **PlayStation 3** que demuestra la arquitectura heterogenea del **Cell Broadband Engine**: el PPU renderiza texto en pantalla via RSX framebuffer, mientras un **SPE ejecuta calculos vectoriales SIMD** en paralelo y devuelve los resultados via DMA. Compilada con [PSL1GHT](https://github.com/ps3dev/PSL1GHT) y [ps3toolchain](https://github.com/ps3dev/ps3toolchain).
 
 ![Screenshot en RPCS3](screenshot/screenshot.png)
 
@@ -9,6 +9,12 @@ Aplicacion homebrew para **PlayStation 3** que muestra texto en pantalla usando 
 - Inicializa el GPU (RSX) con doble buffer XRGB a la resolucion nativa de la consola
 - Renderiza texto en pantalla usando una fuente bitmap 8x8 escalable directamente sobre el framebuffer
 - Muestra un contador de frames y la resolucion activa
+- **Ejecuta un programa en un SPE** que recibe el vector `(1.0, 2.0, 3.0, 4.0)` y calcula:
+  - Cuadrado de cada componente via SIMD (`spu_mul`)
+  - Producto punto (reduccion horizontal del vector)
+  - Magnitud (raiz cuadrada aproximada via `spu_rsqrte`)
+- Muestra los resultados del SPE en pantalla junto al texto principal
+- La comunicacion PPU↔SPU se hace via DMA con un struct alineado a 128 bytes
 - Lee el estado del control via `ioPadGetData` y sale al presionar **X** (cross)
 - Responde a eventos del sistema (salir desde el XMB)
 
@@ -52,6 +58,35 @@ docker run --rm -v "$PWD:/src" flipacholas/ps3devextra:latest make -C /src/src c
 
 Transfiere `hello_world.self` a la PS3 via FTP o USB y ejecuta desde un file manager (multiMAN, webMAN). Si generaste el `.pkg`, instalalo desde **Juego > Package Manager > Install Package Files > Standard**.
 
+## Estructura del proyecto
+
+```
+ps3-hello/
+├── src/
+│   ├── main.c          # PPU: RSX framebuffer + pad input + SPU orchestration
+│   └── Makefile         # Build PPU (invoca build SPU, embebe spu.bin via bin2o)
+├── spu/
+│   ├── source/main.c   # SPU: programa SIMD que corre en el Synergistic Processing Element
+│   └── Makefile         # Build SPU (spu-gcc → spu.elf → data/spu.bin)
+├── include/
+│   └── vecmath.h       # Struct compartido PPU↔SPU (128-byte aligned para DMA)
+├── data/                # Generado durante el build (spu.bin)
+└── docs/
+    └── technical.md    # Documentacion tecnica detallada
+```
+
+## Pipeline de build
+
+```
+spu/source/main.c → spu-gcc → spu.elf → cp → data/spu.bin
+                                                    ↓
+                                                 bin2s → spu_bin.o
+                                                    ↓
+src/main.c → ppu-gcc → main.o ──┐
+                                 ├→ link → hello_world.elf → make_self → .self
+spu_bin.o ──────────────────────┘
+```
+
 ## Librerias PSL1GHT utilizadas
 
 | Libreria | Uso |
@@ -61,7 +96,9 @@ Transfiere `hello_world.self` a la PS3 via FTP o USB y ejecuta desde un file man
 | `libio` | Lectura del control DualShock (pad) |
 | `libsysutil` | Configuracion de video, callbacks del sistema (salir desde XMB) |
 | `librt` | Runtime C de PSL1GHT (inicializa stdout/stderr sobre lv2 TTY) |
-| `liblv2` | Syscalls de bajo nivel (`sysProcessExit`) |
+| `liblv2` | Syscalls de bajo nivel (`sysProcessExit`, `sysSpuInitialize`, `sysSpuThread*`) |
+| `libm` | Funciones matematicas |
+| `libsputhread` | (SPU) Soporte para `spu_thread_exit` en programas SPE |
 
 ## El procesador Cell Broadband Engine
 
