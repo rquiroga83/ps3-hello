@@ -1,6 +1,6 @@
 {
     "name": "PS3 Dev",
-    "image": "ps3dev-local:latest",
+    "image": "flipacholas/ps3devextra:latest",
     "customizations": {
         "vscode": {
             "extensions": ["ms-vscode.cpptools"]

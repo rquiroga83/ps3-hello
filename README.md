@@ -1,151 +1,69 @@
-# 🎮 Hola Mundo PS3
+# Hola Mundo PS3
 
-Un programa "Hola Mundo" homebrew para **PlayStation 3**, compilado con el toolchain [ps3toolchain](https://github.com/ps3dev/ps3toolchain) y el SDK [PSL1GHT](https://github.com/ps3dev/PSL1GHT).
+Aplicacion homebrew para **PlayStation 3** que muestra texto en pantalla usando el framebuffer del RSX y lee entrada del control DualShock 3. Compilada con [PSL1GHT](https://github.com/ps3dev/PSL1GHT) y [ps3toolchain](https://github.com/ps3dev/ps3toolchain).
 
-## Descripción
+## Que hace
 
-Este proyecto es un ejemplo de desarrollo homebrew para PS3 que demuestra el uso de los **Synergistic Processing Elements (SPEs)** del procesador Cell Broadband Engine. El programa envía un vector de 4 floats a un SPE, que realiza cálculos SIMD en paralelo (cuadrados, producto punto, magnitud) y devuelve los resultados al PPU.
+- Inicializa el GPU (RSX) con doble buffer XRGB a la resolucion nativa de la consola
+- Renderiza texto en pantalla usando una fuente bitmap 8x8 escalable directamente sobre el framebuffer
+- Muestra un contador de frames y la resolucion activa
+- Lee el estado del control via `ioPadGetData` y sale al presionar **X** (cross)
+- Responde a eventos del sistema (salir desde el XMB)
 
-### ¿Qué hace el ejemplo SPE?
+## Compilar
 
-1. **PPU** (PowerPC Processing Unit): Prepara un vector `(1.0, 2.0, 3.0, 4.0)` y crea un thread SPU
-2. **SPE** (Synergistic Processing Element): Recibe el vector via **DMA**, calcula:
-   - **Cuadrados** de cada componente usando multiplicación SIMD paralela: `(1, 4, 9, 16)`
-   - **Producto punto** (norma²): `1² + 2² + 3² + 4² = 30.0`
-   - **Magnitud** usando la instrucción `rsqrte` del SPE: `≈ 5.4772`
-3. **PPU**: Lee los resultados transferidos por DMA y los muestra en pantalla
-
-## Estructura del proyecto
-
-```
-.
-├── source/
-│   └── main.c                  # Programa PPU (gestión de threads SPU)
-├── spu/
-│   ├── source/
-│   │   └── main.c              # Programa SPU (cálculo vectorial SIMD)
-│   └── Makefile                # Compilación del programa SPU (spu_rules)
-├── include/
-│   └── vecmath.h               # Estructura compartida PPU ↔ SPU
-├── data/                       # Binario SPU compilado (spu.bin)
-├── Makefile                    # Makefile principal PPU (ppu_rules + bin2o)
-├── Dockerfile                  # Dockerfile raíz (referencia)
-└── .devcontainer/
-    ├── Dockerfile              # Imagen Docker con el toolchain PS3 completo
-    └── devcontainer.json       # Configuración de Dev Container para VS Code
-```
-
-## Requisitos previos
-
-- [Docker](https://www.docker.com/) instalado
-- [VS Code](https://code.visualstudio.com/) con la extensión [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-
-## Inicio rápido
-
-### 1. Construir la imagen Docker
-
-La imagen compila todo el toolchain PS3 desde cero (puede tardar **30-60+ minutos** la primera vez):
+Requiere [Docker](https://www.docker.com/). La imagen `flipacholas/ps3devextra` incluye el toolchain completo (`powerpc64-ps3-elf-gcc`, `sprxlinker`, `make_self`, etc.).
 
 ```bash
-docker build -t ps3dev-local .
+docker run --rm -v "$PWD:/src" flipacholas/ps3devextra:latest make -C /src/src
 ```
 
-### 2. Abrir en Dev Container
+Esto genera:
 
-Abre el proyecto en VS Code y usa el comando:
+| Archivo | Descripcion |
+|---|---|
+| `src/hello_world.elf` | Ejecutable ELF crudo (PPC64) |
+| `src/hello_world.self` | SELF firmado (PS3 real con CFW/HEN) |
+| `src/hello_world.fake.self` | Fake SELF (RPCS3) |
 
-> **Dev Containers: Reopen in Container**
-
-Esto levantará el entorno con todas las herramientas listas (`ppu-gcc`, `ppu-as`, `ppu-ld`, etc.).
-
-### 3. Compilar
-
-Dentro del contenedor:
+Para generar un `.pkg` instalable:
 
 ```bash
-make
+docker run --rm -v "$PWD:/src" flipacholas/ps3devextra:latest make -C /src/src pkg
 ```
 
-Esto generará:
+Limpiar artefactos:
 
-| Archivo          | Descripción                                    |
-|------------------|------------------------------------------------|
-| `data/spu.bin`   | Programa SPU compilado (embebido en el ELF)    |
-| `hola-ps3.elf`   | Ejecutable ELF para PPU con SPU embebido       |
-| `hola-ps3.self`  | Ejecutable firmado (listo para correr en PS3)  |
+```bash
+docker run --rm -v "$PWD:/src" flipacholas/ps3devextra:latest make -C /src/src clean
+```
 
-> **Nota:** El Makefile primero compila el programa SPU (`spu/`), luego lo embebe en el ejecutable PPU usando `bin2o`.
+> En Windows con Git Bash, prefija los comandos con `MSYS_NO_PATHCONV=1` para evitar que `/src` se convierta a una ruta de Windows.
 
-### 4. Ejecutar en PS3 (CFW)
+## Ejecutar en RPCS3
 
-Transfiere el archivo `hola_ps3.self` a tu consola PS3 con CFW (Custom Firmware) mediante FTP o USB y ejecútalo desde un file manager como **multiMAN** o **webMAN**.
+1. Descarga [RPCS3](https://rpcs3.net/download)
+2. Instala el firmware: **File > Install Firmware** con el archivo `PS3UPDAT.PUP` de [PlayStation.com](https://www.playstation.com/en-us/support/hardware/ps3/system-software/)
+3. **File > Boot SELF/ELF** y selecciona `src/hello_world.fake.self`
 
-### 5. Ejecutar en PS3 (HEN)
+## Ejecutar en PS3 (CFW/HEN)
 
-[PS3HEN](https://www.psx-place.com/threads/ps3hen.23369/) (Homebrew Enabler) permite correr homebrew en **cualquier PS3** con firmware oficial (OFW), sin necesidad de un Custom Firmware completo. Es compatible con todos los modelos, incluyendo Super Slim.
+Transfiere `hello_world.self` a la PS3 via FTP o USB y ejecuta desde un file manager (multiMAN, webMAN). Si generaste el `.pkg`, instalalo desde **Juego > Package Manager > Install Package Files > Standard**.
 
-#### Instalación de HEN
+## Librerias PSL1GHT utilizadas
 
-1. Asegúrate de tener tu PS3 en el **firmware más reciente** (o el requerido por la versión de HEN).
-2. Desde el navegador web de la PS3, accede al sitio del exploit HEN (por ejemplo, `http://ps3xploit.me/hen`).
-3. Sigue las instrucciones en pantalla para habilitar HEN. Al reiniciar la consola, deberás activar HEN nuevamente desde el navegador (no es permanente).
+| Libreria | Uso |
+|---|---|
+| `librsx` | Inicializacion RSX, asignacion de memoria de video, flush de comandos |
+| `libgcm_sys` | Configuracion de display buffers, flip, sincronizacion GPU |
+| `libio` | Lectura del control DualShock (pad) |
+| `libsysutil` | Configuracion de video, callbacks del sistema (salir desde XMB) |
+| `librt` | Runtime C de PSL1GHT (inicializa stdout/stderr sobre lv2 TTY) |
+| `liblv2` | Syscalls de bajo nivel (`sysProcessExit`) |
 
-#### Transferir y ejecutar el homebrew
+## El procesador Cell Broadband Engine
 
-1. **Vía USB:**
-   - Crea la ruta `PS3/SAVEDATA/` o simplemente copia `hola_ps3.self` a una memoria USB.
-   - Conecta la USB a la PS3 y usa un file manager como **multiMAN** (instalable como `.pkg`) para navegar y ejecutar el archivo.
-
-2. **Vía FTP:**
-   - Instala un servidor FTP como **webMAN MOD** (disponible como `.pkg`).
-   - Conéctate desde tu PC con un cliente FTP (FileZilla, WinSCP, etc.) a la IP de tu PS3.
-   - Sube `hola_ps3.self` a `/dev_hdd0/game/` o cualquier ubicación accesible.
-   - Ejecuta desde multiMAN o el file manager.
-
-3. **Como PKG instalable** *(recomendado)*:
-   - Si generas un `.pkg`, puedes instalarlo directamente desde el XMB:
-     - Copia el `.pkg` a una USB en la raíz.
-     - En la PS3 ve a **Juego → Package Manager → Install Package Files → Standard**.
-     - La aplicación aparecerá en el XMB como cualquier juego.
-
-> **Importante:** HEN se desactiva al reiniciar la consola. Deberás habilitarlo de nuevo desde el navegador cada vez que enciendas la PS3.
-
-### 6. Ejecutar en emulador (RPCS3)
-
-Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/):
-
-1. **Descargar RPCS3** desde [rpcs3.net](https://rpcs3.net/download) (disponible para Windows, Linux y macOS).
-
-2. **Instalar el firmware de PS3:**
-   - Descarga el firmware oficial desde [PlayStation.com](https://www.playstation.com/en-us/support/hardware/ps3/system-software/).
-   - En RPCS3 ve a **File → Install Firmware** y selecciona el archivo `PS3UPDAT.PUP`.
-
-3. **Ejecutar el homebrew:**
-   - Ve a **File → Boot (S)ELF / (S)SELF** y selecciona el archivo `hola_ps3.self`.
-   - Alternativamente, puedes arrastrar el archivo `.self` directamente a la ventana de RPCS3.
-
-4. **Crear un PKG instalable** *(opcional)*:
-   Si prefieres instalar como aplicación en RPCS3, puedes empaquetar el `.self` en un `.pkg`:
-   ```bash
-   # Dentro del Dev Container (si las herramientas de empaquetado están disponibles)
-   make pkg
-   ```
-   Luego en RPCS3: **File → Install Packages/Raps/Edats** y selecciona el `.pkg`.
-
-> **Nota:** RPCS3 requiere un equipo con buenas prestaciones. Consulta la [guía de inicio rápido](https://rpcs3.net/quickstart) para los requisitos de sistema recomendados.
-
-## Detalles técnicos
-
-| Propiedad     | Valor                                      |
-|---------------|---------------------------------------------|
-| **Target**    | `hola-ps3`                                  |
-| **Content ID**| `UP0001-PSL145310_00-0000000000000001`      |
-| **App ID**    | `PSL145310`                                 |
-| **Toolchain** | ps3toolchain (GCC cross-compiler PPU/SPU)   |
-| **SDK**       | PSL1GHT                                     |
-| **Base OS**   | Debian Bookworm (contenedor Docker)         |
-
-### Arquitectura Cell Broadband Engine
+El Cell BE es un procesador heterogeneo disenado por Sony, Toshiba e IBM para la PlayStation 3. Combina un nucleo de proposito general con multiples unidades de computo paralelo:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -157,22 +75,29 @@ Si no tienes una PS3 física, puedes usar el emulador [RPCS3](https://rpcs3.net/
 │  │  64-bit │    │256KB│ │256KB│ │256KB│         │
 │  └────┬────┘    └──┬──┘ └──┬──┘ └──┬──┘         │
 │       │            │       │       │            │
-│  ═════╪════════════╪═══════╪═══════╪═══════════ │
+│  ═════╪════════════╪═══════╪═══════╪════════════│
 │       │     Element Interconnect Bus (EIB)      │
-│  ═════╪════════════╪═══════╪═══════╪═══════════ │
+│  ═════╪════════════╪═══════╪═══════╪════════════│
 │       │            │       │       │            │
 │  ┌────┴────┐    ┌──┴──┐ ┌──┴──┐ ┌──┴──┐         │
 │  │   MIC   │    │ SPE │ │ SPE │ │ SPE │         │
 │  │ Memory  │    │  3  │ │  4  │ │  5  │         │
 │  │Interface│    │256KB│ │256KB│ │256KB│         │
 │  └─────────┘    └─────┘ └─────┘ └─────┘         │
-│                                                 │
-│  PPU: Controla el flujo del programa            │
-│  SPE: 128-bit SIMD, cálculo masivo paralelo     │
-│  DMA: Transferencia asíncrona entre RAM y SPE   │
 └─────────────────────────────────────────────────┘
 ```
 
+**PPU (PowerPC Processing Unit)** — Nucleo principal de 64 bits con dos hilos hardware (SMT). Ejecuta el sistema operativo y controla el flujo del programa. En homebrew, el PPU inicializa subsistemas (RSX, pads, SPUs) y coordina la logica principal.
+
+**SPE (Synergistic Processing Element)** — 6 unidades de computo independientes (7 en el silicio, 1 deshabilitada por yield). Cada SPE tiene:
+- **256 KB de Local Store**: memoria rapida y exclusiva (no es cache, es SRAM direccionable)
+- **128 registros de 128 bits**: operaciones SIMD nativas sobre 4 floats, 8 shorts o 16 bytes en paralelo
+- **MFC (Memory Flow Controller)**: motor DMA autonomo para transferencias asincronas entre Local Store y memoria principal
+
+Los SPEs no acceden a RAM directamente. Toda comunicacion con el PPU se hace via DMA a traves del **EIB (Element Interconnect Bus)**, un bus en anillo de 204.8 GB/s de ancho de banda.
+
+**RSX (Reality Synthesizer)** — GPU basado en la arquitectura NVIDIA G70 (similar a GeForce 7800). Tiene 256 MB de GDDR3 dedicados y acceso a los 256 MB de XDR RAM del sistema via FlexIO. En este proyecto se usa para el framebuffer de video con doble buffer y flip sincronizado a VSYNC.
+
 ## Licencia
 
-Este proyecto es de uso libre con fines educativos.
+Uso libre con fines educativos.
