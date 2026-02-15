@@ -1,10 +1,11 @@
 /*
- * PS3 Homebrew - RSX Framebuffer + Text + Pad Input
+ * PS3 Homebrew - RSX Framebuffer + Text + Pad Input + SPE Vector Math
  * Uses PSL1GHT SDK: libgcm_sys, librsx, libio, libsysutil
  *
  * Displays text on screen using a built-in 8x8 bitmap font rendered
- * directly to the RSX framebuffer. Reads controller input and exits
- * when the X (cross) button is pressed.
+ * directly to the RSX framebuffer. Sends a vector calculation to one
+ * of the Cell BE's SPEs and displays the results. Reads controller
+ * input and exits when the X (cross) button is pressed.
  */
 
 #include <stdio.h>
@@ -21,6 +22,10 @@
 #include <sysutil/sysutil.h>
 #include <io/pad.h>
 #include <lv2/process.h>
+#include <sys/spu.h>
+#include <sys/thread.h>
+
+#include "vecmath.h"
 
 /* ---------- constants ---------- */
 #define MAX_BUFFERS     2
@@ -43,6 +48,13 @@ typedef struct {
 static displayBuffer buffers[MAX_BUFFERS];
 
 static int running = 1;
+
+/* ---------- SPE data ---------- */
+extern const unsigned int spu_bin[];
+extern const unsigned int spu_bin_size;
+
+static vecmath_data_t spe_data __attribute__((aligned(128)));
+static int spe_ok = 0;  /* 1 if SPE ran successfully */
 
 /* ================================================================
  *  Minimal 8x8 bitmap font (ASCII 32..126)
@@ -317,6 +329,76 @@ int main(int argc, const char *argv[])
 
     printf("RSX framebuffer text demo started\n");
 
+    /* ---- Run SPE vector calculation ---- */
+    {
+        sysSpuImage spu_image;
+        u32 group_id;
+        u32 thread_id;
+        u32 cause, status;
+        s32 ret;
+
+        /* Fill input vector: (1.0, 2.0, 3.0, 4.0) */
+        spe_data.input[0] = 1.0f;
+        spe_data.input[1] = 2.0f;
+        spe_data.input[2] = 3.0f;
+        spe_data.input[3] = 4.0f;
+        spe_data.done = 0;
+
+        printf("SPE: sizeof(vecmath_data_t)=%u addr=%p\n",
+               (unsigned int)sizeof(vecmath_data_t), &spe_data);
+
+        /* Initialize SPU subsystem (6 SPEs available on Cell BE) */
+        ret = sysSpuInitialize(6, 0);
+        printf("SPE: sysSpuInitialize ret=%d\n", ret);
+
+        /* Load SPU image from embedded binary */
+        ret = sysSpuImageImport(&spu_image, spu_bin, 0);
+        printf("SPE: sysSpuImageImport ret=%d entry=0x%x segs=%u\n",
+               ret, spu_image.entryPoint, spu_image.segmentCount);
+
+        /* Create thread group */
+        sysSpuThreadGroupAttribute grpattr;
+        memset(&grpattr, 0, sizeof(grpattr));
+        grpattr.nameSize = 7;
+        grpattr.nameAddress = (u32)(uintptr_t)"spugrp";
+        grpattr.groupType = 0;
+        grpattr.memContainer = 0;
+        ret = sysSpuThreadGroupCreate(&group_id, 1, 100, &grpattr);
+        printf("SPE: sysSpuThreadGroupCreate ret=%d group=%u\n", ret, group_id);
+
+        /* Create SPU thread */
+        sysSpuThreadAttribute thattr;
+        memset(&thattr, 0, sizeof(thattr));
+        thattr.nameAddress = (u32)(uintptr_t)"sputhr";
+        thattr.nameSize = 7;
+        thattr.attribute = SPU_THREAD_ATTR_NONE;
+
+        sysSpuThreadArgument arg;
+        arg.arg0 = (u64)(uintptr_t)&spe_data;
+        arg.arg1 = 0;
+        arg.arg2 = 0;
+        arg.arg3 = 0;
+        ret = sysSpuThreadInitialize(&thread_id, group_id, 0, &spu_image, &thattr, &arg);
+        printf("SPE: sysSpuThreadInitialize ret=%d thread=%u\n", ret, thread_id);
+
+        /* Start and wait for completion */
+        ret = sysSpuThreadGroupStart(group_id);
+        printf("SPE: sysSpuThreadGroupStart ret=%d\n", ret);
+
+        printf("SPE: waiting for join...\n");
+        ret = sysSpuThreadGroupJoin(group_id, &cause, &status);
+        printf("SPE: sysSpuThreadGroupJoin ret=%d cause=%u status=%u\n", ret, cause, status);
+
+        if (spe_data.done) {
+            spe_ok = 1;
+            printf("SPE done: dot=%.2f mag=%.2f\n", spe_data.dot_product, spe_data.magnitude);
+        } else {
+            printf("SPE did not complete (done=%u)\n", spe_data.done);
+        }
+
+        sysSpuImageClose(&spu_image);
+    }
+
     /* Main loop */
     while (running) {
         /* Check for system events (XMB quit, etc.) */
@@ -359,6 +441,31 @@ int main(int argc, const char *argv[])
             char res[64];
             sprintf(res, "Resolution: %ux%u", res_width, res_height);
             drawString(res, 80, 280, 0x00AAAAAA, 2);
+        }
+
+        /* SPE results */
+        if (spe_ok) {
+            char buf[128];
+
+            drawString("--- SPE Vector Math ---", 80, 340, 0x00FFD700, 2);
+
+            sprintf(buf, "Input:  (%.1f, %.1f, %.1f, %.1f)",
+                    spe_data.input[0], spe_data.input[1],
+                    spe_data.input[2], spe_data.input[3]);
+            drawString(buf, 80, 370, 0x0099CCFF, 2);
+
+            sprintf(buf, "Output: (%.1f, %.1f, %.1f, %.1f)",
+                    spe_data.output[0], spe_data.output[1],
+                    spe_data.output[2], spe_data.output[3]);
+            drawString(buf, 80, 400, 0x0099CCFF, 2);
+
+            sprintf(buf, "Dot product: %.2f", spe_data.dot_product);
+            drawString(buf, 80, 430, 0x0099CCFF, 2);
+
+            sprintf(buf, "Magnitude:   %.2f", spe_data.magnitude);
+            drawString(buf, 80, 460, 0x0099CCFF, 2);
+        } else {
+            drawString("SPE: not available", 80, 340, 0x00FF4444, 2);
         }
 
         /* Flip to display the frame we just drew */
